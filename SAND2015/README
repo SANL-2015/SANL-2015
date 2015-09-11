@@ -1,0 +1,100 @@
+=============
+SAML Benchmarks README
+==============
+
+Contents:
+--------- 
+(0) Introduction
+(1) Liblock
+(2) Microbenchmark
+(3) Phoenix 2
+(4) Memcached
+(5) Berkeley DB
+
+(0) Introduction
+================
+
+This file explains how to compile the benchmarks and run them.
+
+The first step for all benchmarks is to set the ROOT variable in the 
+'Makefile.config' file to the local path of your saml_benchmarks directory after
+extraction.
+
+(1) Liblock
+===========
+
+All benchmarks require the liblock.
+
+Building the liblock
+--------------------
+
+1. Enter the liblock directory
+2. Run 'make'
+
+(2) Microbenchmark
+==================
+
+Building the microbenchmark
+---------------------------
+
+In order to build the microbenchmark, PAPI (http://icl.cs.utk.edu/papi/) must be 
+installed on your system.
+
+1. Enter the microbenchmark directory
+2. Run 'make'
+
+Running the microbenchmark
+--------------------------
+
+To run the latencies test: ./latencies.sh
+
+The results will be output to the results/ directory. Alternatively, you can 
+unpack the provided archive.
+
+To plot the results:
+Latencies: ./plot_draw_lan_intel.sh
+
+(3) Phoenix 2
+=============
+
+1. Enter the phoenix/ directory.
+2. Enter the phoenix-rcl/ subdirectory, and run 'make' to compile Phoenix 2.
+3. Back in the phoenix/ directory, use 'run_all.sh' to run the benchmark. Other 
+scripts are provided to plot graphs and to run the profiler on Phoenix 2.
+
+(4) Memcached
+=============
+
+Building the client
+-------------------
+
+1. Enter the memcached-liblock/libmemcached-1.0.2 directory
+2. For now, the core order is hard-coded in the libmemcached client. Please 
+update it to reflect your architecture by modifying the contents of the 
+cpu_map variable in the clients/memslap.cc file.
+3. Run './configure'
+4. Run 'make'
+
+Building the server
+-------------------
+
+1. Enter the memcahed-liblock/memcached-1.4.6-patched directory
+2. Run './configure'
+3. Run 'make'
+
+Running the microbenchmark
+--------------------------
+
+Just run the benchmark.sh script. Other scripts are provided to plot the graphs
+(plot.sh). 
+
+(5) Berkeley DB
+===============
+
+1. Enter the berkeleydb/ directory.
+2. Run './generate.sh'
+3. Use the benchmark.sh script to run the benchmark. Information about the
+available parameters can be found in the script.
+
+The script plot.sh can be used to plot the results.
+

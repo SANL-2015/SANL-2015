@@ -1,0 +1,142 @@
+## +EDIT
+#DBDIR=  /cs/systems/Benchmarks/db-4.4.8/build_Solx86
+#LIBDB=  $(DBDIR)/libdb.a
+DBDIR=  /home/loulan/svn-lozi_net/margaux/profiling/berkeleydb/db-5.2.28.NC-mini/build_unix
+LIBDB=  $(DBDIR)/libdb.a
+## -EDIT
+
+
+## +EDIT
+#CPPFLAGS=-I$(DBDIR)
+CPPFLAGS= -I$(DBDIR)
+## -EDIT
+
+#Linux x86_64
+## +EDIT
+#CFLAGS = -O2
+#LIBS = -lm  -L/usr/local/lib -lnsl -lpthread  -lrt -ldb
+#CC = gcc
+#CCLINK = gcc
+CFLAGS = -O2 -fno-omit-frame-pointer $(CPPFLAGS) -g
+LIBS = -lm -L$(DBDIR) -lnsl -lpthread -lrt -ldb
+CC = gcc
+CCLINK = gcc -rdynamic
+## -EDIT
+
+
+PROGS=  tpcc_load tpcc_xact_server tpcc_space tpcc_msgh_newo tpcc_msgh_paym \
+	tpcc_msgh_ords tpcc_msgh_del tpcc_msgh_stock runcl
+TPCC_LOAD_OBJS=   tpcc_load.o tpcc_helpers.o log.o
+TPCC_SERVER_OBJS = tpcc_xact_server.o tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o db_checkpoint.o log.o db_trickle.o
+TPCC_SPACE_OBJS = tpcc_space.o
+TPCC_MSGH_NEWO_OBJS = tpcc_msgh_newo.o msgh_common.o db_checkpoint.o \
+		tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o log.o  db_trickle.o
+TPCC_MSGH_PAYM_OBJS = tpcc_msgh_paym.o msgh_common.o db_checkpoint.o \
+		tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o log.o  db_trickle.o
+TPCC_MSGH_ORDS_OBJS = tpcc_msgh_ords.o msgh_common.o db_checkpoint.o \
+		tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o log.o db_trickle.o
+TPCC_MSGH_DEL_OBJS = tpcc_msgh_del.o msgh_common.o db_checkpoint.o \
+		tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o log.o db_trickle.o
+TPCC_MSGH_STOCK_OBJS = tpcc_msgh_stock.o msgh_common.o db_checkpoint.o \
+		tpcc_helpers.o tpcc_neworder.o \
+		tpcc_payment.o tpcc_delivery.o tpcc_orderstatus.o \
+		tpcc_stocklevel.o log.o db_trickle.o
+
+all: $(PROGS)
+
+tpcc_load: $(TPCC_LOAD_OBJS) $(LIBDB)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_LOAD_OBJS) $(LIBS) 
+
+tpcc_xact_server: $(TPCC_SERVER_OBJS) $(LIBDB)
+	$(CCLINK) -o $@ $(TPCC_SERVER_OBJS) $(LIBS) 
+
+tpcc_space: $(TPCC_SPACE_OBJS)
+	$(CCLINK) -o $@  $(TPCC_SPACE_OBJS)
+
+tpcc_msgh_newo: $(TPCC_MSGH_NEWO_OBJS)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_MSGH_NEWO_OBJS) $(LIBS)	
+
+tpcc_msgh_paym: $(TPCC_MSGH_PAYM_OBJS)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_MSGH_PAYM_OBJS) $(LIBS)	
+
+tpcc_msgh_ords: $(TPCC_MSGH_ORDS_OBJS)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_MSGH_ORDS_OBJS) $(LIBS)	
+
+tpcc_msgh_del: $(TPCC_MSGH_DEL_OBJS)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_MSGH_DEL_OBJS) $(LIBS)	
+
+tpcc_msgh_stock: $(TPCC_MSGH_STOCK_OBJS)
+	$(CCLINK) -o $@ -L$(DBDIR)/lib/ $(TPCC_MSGH_STOCK_OBJS) $(LIBS)
+
+runcl: run_clients.o tpcc_helpers.o log.o
+	$(CCLINK) -o $@ run_clients.o tpcc_helpers.o log.o -lm $(LIBS)	
+
+run_clients.o: run_clients.c
+	$(CC) $(CFLAGS) -c run_clients.c
+
+tpcc_load.o: tpcc_load.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_load.c
+
+tpcc_helpers.o: tpcc_helpers.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_helpers.c
+
+tpcc_neworder.o: tpcc_neworder.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_neworder.c
+
+tpcc_payment.o: tpcc_payment.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_payment.c
+
+tpcc_delivery.o: tpcc_delivery.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_delivery.c
+
+tpcc_orderstatus.o: tpcc_orderstatus.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_orderstatus.c
+
+tpcc_stocklevel.o: tpcc_stocklevel.c tpcc_schema.h tpcc_globals.h
+	$(CC) $(CFLAGS) -c tpcc_stocklevel.c
+
+db_checkpoint.o: db_checkpoint.c 
+	$(CC) $(CFLAGS) -c db_checkpoint.c
+
+db_trickle.o: db_trickle.c 
+	$(CC) $(CFLAGS) -c db_trickle.c
+
+tpcc_xact_server.o: tpcc_xact_server.c tpcc_schema.h tpcc_globals.h \
+	tpcc_trans.h 
+	$(CC) $(CFLAGS) -c tpcc_xact_server.c
+
+tpcc_space.o: tpcc_space.c tpcc_globals.h tpcc_schema.h 
+	$(CC) $(CFLAGS) -c tpcc_space.c
+
+msgh_common.o: msgh_common.c msgh_common.h 
+	$(CC) $(CFLAGS) -c msgh_common.c
+
+tpcc_msgh_newo.o: tpcc_msgh_newo.c msgh.h msgh_common.h 
+	$(CC) $(CFLAGS) -c tpcc_msgh_newo.c
+
+tpcc_msgh_paym.o: tpcc_msgh_paym.c msgh.h msgh_common.h 
+	$(CC) $(CFLAGS) -c tpcc_msgh_paym.c
+
+tpcc_msgh_ords.o: tpcc_msgh_ords.c msgh.h msgh_common.h 
+	$(CC) $(CFLAGS) -c tpcc_msgh_ords.c
+
+tpcc_msgh_del.o: tpcc_msgh_del.c msgh.h msgh_common.h 
+	$(CC) $(CFLAGS) -c tpcc_msgh_del.c
+
+tpcc_msgh_stock.o: tpcc_msgh_stock.c msgh.h msgh_common.h 
+	$(CC) $(CFLAGS) -c tpcc_msgh_stock.c
+
+log.o: log.c log.h 
+	$(CC) $(CFLAGS) -c log.c
+clean:
+	rm -f core *.core *.o $(PROGS)

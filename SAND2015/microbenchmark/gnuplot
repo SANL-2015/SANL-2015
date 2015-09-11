@@ -1,0 +1,32 @@
+reset;
+set terminal pdf dashed enhanced font "Helvetica, 8";
+set datafile separator ",";
+
+
+
+set log xy;
+unset y2tics;
+set ylabel "";
+set log y2;
+set key default;
+set key above;
+set key right;
+set key font ",2";
+set key spacing 1;
+set xrange[101:3000000];
+set yrange[1000:1000000];
+set y2range[1000:1000000];
+set xlabel "Delay (cycles)";
+set y2label "Execution time (cycles)";
+unset ytics;
+set y2tics;
+set terminal pdf;
+set output "lat_tit.pdf";
+plot title "5 accesses:                RCL",\
+     title "MCS",\
+     title "SL",\
+     title "FC",\
+     title "POSIX",\
+     title "SAML"
+set output;
+

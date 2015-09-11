@@ -1,0 +1,45 @@
+--- db-5.2.28.NC/src/dbreg/dbreg.c	2014-03-20 09:59:28.138189370 +0800
++++ db-5.2.28.NC/src/dbreg/dbreg.c	2014-03-20 10:01:47.593243979 +0800
+@@ -680,16 +680,32 @@
+ 			 * the transaction will not close the wrong handle.
+ 			 */
+ 			F_SET(fnp, DB_FNAME_CLOSED);
+-			fnp->txn_ref--;
+-			MUTEX_UNLOCK(env, dbp->mutex);
+-			/* The mutex now lives only in the FNAME. */
+-			dbp->mutex = MUTEX_INVALID;
+-			dbp->log_filename = NULL;
+-			return (ret);//jll, was goto no_log;
+-		}
+-		MUTEX_UNLOCK(env, dbp->mutex); //jll
+-	}
+-	MUTEX_LOCK(env, lp->mtx_filelist);
++                        fnp->txn_ref--;
++                        ret1 = 0 + 1;
++                        __GOTO__(done2);}
++                done2: {
++
++                }
++                }outcontext3->ret = ret;
++
++                __RETURN__((void *)(uintptr_t)ret1);
++                }
++ #endif
++                ret1 =(int)(uintptr_t)(liblock_execute_operation(env, dbp->mutex, (void *)(uintptr_t)(&instance8),
++                                          &function9));
++                ret = instance8.output5.ret;
++                }
++                if (ret1) {
++                        if (ret1 == 0 + 1)
++                                {
++                                        dbp->mutex = MUTEX_INVALID;
++                                        dbp->log_filename = NULL;
++                                        return(ret);
++                                }
++
++                } // jll
++        }
++        MUTEX_LOCK(env, lp->mtx_filelist);
+ 
+ 	if ((ret = __dbreg_log_close(env, fnp, txn, op)) != 0)
+ 		goto err;

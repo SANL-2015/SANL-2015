@@ -1,0 +1,65 @@
+--- db-5.2.28.NC/src/db/db.c	2014-03-20 10:24:38.018815229 +0800
++++ db-5.2.28.NC/src/db/db.c	2014-03-20 10:23:36.455678142 +0800
+@@ -1400,18 +1400,58 @@
+ 	for (*countp = 0;
+ 	    ldbp != NULL && ldbp->adj_fileid == dbp->adj_fileid;
+ 	    ldbp = TAILQ_NEXT(ldbp, dblistlinks)) {
+-loop:		MUTEX_LOCK(env, ldbp->mutex);
++		{ union instance43 instance43 = {
++                {
++                        indx,
++                          pgno,
++                          countp,
++                          env,
++                          my_dbc,
++                          dbc,
++                          ldbp,
++                          args,
++                          ret,
++              func
++                  },
++          };
++          #if 0
++{
++          struct output40 *outcontext38 = &(((union instance43 *)ctx42)->output40);
++          struct input41 *incontext39 = &(((union instance43 *)ctx42)->input41);
++          u_int32_t indx = incontext39->indx;
++          db_pgno_t pgno = incontext39->pgno;
++          u_int32_t *countp = incontext39->countp;
++          ENV *env = incontext39->env;
++          DBC *my_dbc = incontext39->my_dbc;
++          DBC *dbc = incontext39->dbc;
++          DB *ldbp = incontext39->ldbp;
++          void *args = incontext39->args;
++          int ret = incontext39->ret;
++          ret = ret;{ // jll
++loop:
++
+ 		TAILQ_FOREACH(dbc, &ldbp->active_queue, links)
+ 			if ((ret = (func)(dbc, my_dbc,
+ 			    countp, pgno, indx, args)) != 0)
+ 				break;
++				dbc = dbc;
+ 		/*
+ 		 * We use the error to communicate that function
+ 		 * dropped the mutex.
+ 		 */
+-		if (ret == DB_LOCK_NOTGRANTED)
+-			goto loop;
+-		MUTEX_UNLOCK(env, ldbp->mutex);
++                if (ret == DB_LOCK_NOTGRANTED) {
++                        liblock_relock_in_cs(MLOCK(env, ldbp->mutex)); // jll
++                        goto loop;
++                }
++                }outcontext38->dbc = dbc;
++
++                __RETURN__((void *)(uintptr_t)ret);
++                }
++#endif
++                ret =(int)(uintptr_t)(liblock_execute_operation(env, ldbp->mutex,
++                                          (void *)(uintptr_t)(&instance43), &function44));
++                dbc = instance43.output40.dbc;
++                }
+ 		if (ret != 0)
+ 			break;
+ 	}

@@ -1,0 +1,219 @@
+INTRODUCTION 
+============= 
+
+TpccOverBkDB is the implementation of the server component of the
+TPC-C benchmark over Oracle Berkeley DB database. While a full-blown
+TPC-C requires a multi-tier client server set-up (http://www.tpc.org),
+TpccOverBkDB is a light-weight version simulating only the load on the
+server resulting from executing database transactions.
+
+The benchmark spawns several threads that perform transactions of a
+specified type over a previously generated database. There are many
+ways to configure the benchmark, such as the number of threads, CPU
+bindings of the threads, the number of transactions, etc. These
+options are described below.
+
+The benchmark also has the functionality to be used in the
+client-server set-up, but this functionality has not been extensively
+used or tested, so it comes "as is".
+
+WHAT'S INCLUDED IN THIS DISTRIBUTION
+====================================
+
+This distribution has been created for 64-bit Solaris/SPARC
+platforms. It contains:
+
+1. A pre-built Berkeley DB library which you can link to the executable.
+2. A pre-built benchmark executable (tpcc_xact_server)
+3. A pre-built tool for generation of databases (tpcc_load)
+3. Makefile for 64-bit Solaris/SPARC compilation
+4. Source code for the benchmark
+5. Example scripts and input files
+
+Outlined below are the steps required to get started with TpccOverBkDB.
+
+
+BEFORE YOU BEGIN
+================
+You must follow these two steps before you begin running the benchmark:
+
+1. Compile the benchmark and Berkeley DB library.
+2. Create databases.
+
+
+STEP1: COMPILATION 
+================== 
+
+You may skip these steps if you are running on a 64-bit Solaris/SPARC
+platform.
+
+1. Download and build Berkeley DB.
+
+(If you'd like to use the pre-built Berkeley DB library, you may skip
+this step.)
+
+Free download and build instructions are at
+http://www.oracle.com/technology/products/berkeley-db/index.html. The
+most recent version of the benchmark has been tested with Berkeley DB
+4.4.8.
+
+
+2. Build the benchmark
+
+Modify the makefile to point to the directory with Berkeley DB and to
+choose the right set of flags and libraries for your system. Then
+simply type "make".
+
+
+STEP2: PRERARATION OF DATASASES
+===============================
+
+You will use the tool tpcc_load that comes with the benchmark. The
+tool accepts the following arguments:
+	
+	tpcc_load
+		-h <data files home directory (must use absolute path)>
+		-w <number of warehouses - usually 10. Change to control
+			the size of the database>
+		-d [debug - produces more output]
+
+Using the default (10) number of warehouses will produce 11 *.db files
+of about 1.4GB in aggregate size.
+
+Example: to create a database with one warehouse, run tpcc_load like this:
+	./tpcc_load -h /DB-1WH -w 1
+
+
+RUNNING THE BENCHMARK
+=====================
+
+Options:
+--------
+
+TpccOverBkDB can be configured with a variety of options. The options
+are shown and explained below. We then give a few examples of how to
+run the benchmark with some popular configuration options.
+
+Required parameters: -h [database home directory]
+Other parameters:    -b run the benchmark
+                     -d generate debug output
+                     -i prompt to specify test transaction type
+                     -n [number of txn to perform]
+                     -t [transaction type for the benchmark]
+                              (0-MIXED, 1-PAYMENT,
+                         2-NEW ORDER, 3-ORDER STATUS,
+                         4-DELIVERY, 5-STOCK LEVEL)
+                     -r  Run db recovery and exit
+                     -B [CPU id] bind to a CPU
+                     -C do not use random txn inputs
+                     -L run without locks - ok if not more than one writer
+                     -W [max warehouse number]
+                     -P Run with DB_PRIVATE
+                     -R [rate] Attain this txn rate
+                     -S Scan all files into the db cache before running the benchmarks
+                     -T Start the trickle thread and exit
+
+
+-h: followed by the directory name, specifies the directorycontaining
+the databases that you created using tpcc_load
+
+-b: specifies that you want the benchmark to execute locally, without
+the client server set-up and to generate its own transactional load.
+
+-i: interactive mode: instead of specifying the threads and
+transactions to run via options, they can be entered interactively
+after the benchmark has started
+
+-t: followed by the the transaction type, specifies that you want to
+spawn a thread performing a particular transaction type. Has no effect
+if you are using the "-i" option. You can have multiple "-t" option is
+you want to run multiple threads executing different transaction
+types.
+
+-B: followed by the CPU ID, specifies the CPU id to which the current
+thread will be bound. Must be preceeded by "-t" option. The CPU
+binding will be applied to the thread created by the "-t" option.
+
+-C: forces the benchmark not to use random numbers when performing
+transactions. Useful when you want to generate predictable runs.
+
+-L: running without locks can only be done if all the threads are
+executing read-only transactions (such as order status)
+
+-W: maximum warehouse number to use. Has to be less or equal to the
+number of warehouses in the database over which you are running the
+benchmark.
+
+-P: run with a privately initialized Berkeley DB environment. This
+means that the Berkeley DB environment can be accessed by threads
+within the same process, but not by different processes.
+
+-R: reach the given transaction rate before beginning to measure.
+
+-S: warm the file system buffer cache by pre-loading all database
+files into memory.
+
+-T: start the trickle thread. This is a Berkeley DB tool that applies
+the changes recorded in the database logs to the actual
+database. Useful to run after a crash if you care about maintaining
+the state of the database.
+
+Format of input files for interactive runs:
+-------------------------------------------
+
+When you run with "-i" option, you need to specify the inputs regarding the number of threads, the type and number of transactions and the thread CPU binding interactively. To avoid entering this data by hand, you can enter these parameters into an input file and then feed that file to the benchmark. Some example input files are provided with this distribution in the directory INPUT. The format of the input file is as follows:
+
+For each thread, the following are repeated:
+
+<transaction type>
+<bound CPU id or -1>
+<the number of transactions>
+0 <a non-zero value would be used if you run on a hardware simulator>
+
+At the end of the input:
+-1
+
+For example, to run a benchmark with two threads exectuing order status transactions, 50000 transactions each, bound to CPUs 10 and 11, you'd have the following input file:
+
+3
+10
+50000
+0
+3
+11
+50000
+0
+-1
+
+Examples:
+---------
+
+To run a benchmark over a 5-warehouse database, with a pre-warmed the
+buffer cache, using private DB environment, with local workload
+generation over a database located in /cs/systems/BKDB/DB_HOME-5WH,
+with two orderstatus threads bound to CPUs 0 and 4, performing 50K
+transactions each, you's execute the following command:
+
+./tpcc_xact_server -W 5 -S -P -b -h /cs/systems/BKDB/DB_HOME-5WH -i <
+./INPUT/2t-OS-CPU0,CPU4,50K
+
+To run a benchmark over a 10-warehouse database, with a pre-warmed the
+buffer cache, using private DB environment, with local workload
+generation over a database located in /cs/systems/BKDB/DB_HOME-5WH,
+with eight threads performing mixed transactions, 50K transactions
+each, and not bound to any CPUs, you'd execute the following command:
+
+./tpcc_xact_server -W 5 -S -P -b -h /cs/systems/BKDB/DB_HOME-10WH -i <
+./INPUT/8t-MIX-unbound,50K
+ 
+
+
+ADVANCED CONFIGURATION OPTIONS:
+================================
+
+File tpcc_globals.h contains parameters for Berkeley DB configuration,
+such as memory pool page size and memory pool cache size. You can
+change them if default values do not suit you. Refer to Berkeley DB
+reference guide to understand the meaning of these parameters.
+
+

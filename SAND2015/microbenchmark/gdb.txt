@@ -1,0 +1,1 @@
+sudo gdb --args ./benchmark -m -1 -n 10000 -d 1000 -A 1 -c 48 -s 1 -u -g 1 -l 0 -F fccsynch

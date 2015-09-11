@@ -1,0 +1,993 @@
+diff -u -p a/db-5.2.28.NC/src/btree/bt_curadj.c b/db-5.2.28.NC/src/btree/bt_curadj.c
+--- a/db-5.2.28.NC/src/btree/bt_curadj.c
++++ b/db-5.2.28.NC/src/btree/bt_curadj.c
+@@ -357,11 +357,40 @@ __bam_ca_dup_func(dbc, my_dbc, foundp, f
+ 	dbp = dbc->dbp;
+ 	args = vargs;
+ 
+-	MUTEX_UNLOCK(dbp->env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = dbp->env->dbenv;
++
++		if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	if ((ret = __bam_opd_cursor(dbp,
+ 	    dbc, args->first, args->tpgno, args->ti)) != 0) {
+-		MUTEX_LOCK(dbp->env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = dbp->env->dbenv;
++
++			if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv,
++							   DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++
++				CHECK_MTX_THREAD(dbp->env, mutexp);
++
++				pthread_mutex_lock(&mutexp->u.m.mutex);
++
++				F_SET(mutexp, DB_MUTEX_LOCKED);
++				dbenv->thread_id(dbenv, &mutexp->pid,
++						 &mutexp->tid);
++			}
++		}
+ 		return (ret);
+ 	}
+ 	if (args->my_txn != NULL && args->my_txn != dbc->txn)
+@@ -444,9 +473,38 @@ __bam_ca_undodup_func(dbc, my_dbc, count
+ 	    orig_cp->opd->internal)->indx != args->ti ||
+ 	    MVCC_SKIP_CURADJ(dbc, fpgno))
+ 		return (0);
+-	MUTEX_UNLOCK(dbp->env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = dbp->env->dbenv;
++
++		if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 	if ((ret = __dbc_close(orig_cp->opd)) != 0) {
+-		MUTEX_LOCK(dbp->env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = dbp->env->dbenv;
++
++			if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv,
++							   DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++
++				CHECK_MTX_THREAD(dbp->env, mutexp);
++
++				pthread_mutex_lock(&mutexp->u.m.mutex);
++
++				F_SET(mutexp, DB_MUTEX_LOCKED);
++				dbenv->thread_id(dbenv, &mutexp->pid,
++						 &mutexp->tid);
++			}
++		}
+ 		return (ret);
+ 	}
+ 	orig_cp->opd = NULL;
+diff -u -p a/db-5.2.28.NC/src/db/db_am.c b/db-5.2.28.NC/src/db/db_am.c
+--- a/db-5.2.28.NC/src/db/db_am.c
++++ b/db-5.2.28.NC/src/db/db_am.c
+@@ -59,7 +59,23 @@ __db_cursor_int(dbp, ip, txn, dbtype, ro
+ 	 * right type.  With off page dups we may have different kinds
+ 	 * of cursors on the queue for a single database.
+ 	 */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 
+ #ifndef HAVE_NO_DB_REFCOUNT
+ 	/*
+@@ -77,7 +93,18 @@ __db_cursor_int(dbp, ip, txn, dbtype, ro
+ 	    !F_ISSET(dbp, DB_AM_RECOVER) &&
+ 	    dbp->log_filename != NULL && !IS_REP_CLIENT(env) &&
+ 	    (ret = __txn_record_fname(env, txn, dbp->log_filename)) != 0) {
+-		MUTEX_UNLOCK(env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = env->dbenv;
++
++			if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(env, dbp->mutex);
++				F_CLR(mutexp, DB_MUTEX_LOCKED);
++				pthread_mutex_unlock(&mutexp->u.m.mutex);
++			}
++		}
+ 		return (ret);
+ 	}
+ 
+@@ -89,7 +116,18 @@ __db_cursor_int(dbp, ip, txn, dbtype, ro
+ 			F_CLR(dbc, ~DBC_OWN_LID);
+ 			break;
+ 		}
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	if (dbc == NULL) {
+ 		if ((ret = __os_calloc(env, 1, sizeof(DBC), &dbc)) != 0)
+@@ -371,10 +409,37 @@ __db_cursor_int(dbp, ip, txn, dbtype, ro
+ 	else
+ 		ENV_GET_THREAD_INFO(env, dbc->thread_info);
+ 
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	TAILQ_INSERT_TAIL(&dbp->active_queue, dbc, links);
+ 	F_SET(dbc, DBC_ACTIVE);
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	*dbcp = dbc;
+ 	return (0);
+@@ -991,7 +1056,23 @@ __db_secondary_close(sdbp, flags)
+ 	primary = sdbp->s_primary;
+ 	env = primary->env;
+ 
+-	MUTEX_LOCK(env, primary->mutex);
++	if (primary->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, primary->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	/*
+ 	 * Check the refcount--if it was at 1 when we were called, no
+ 	 * thread is currently updating this secondary through the primary,
+@@ -1007,7 +1088,18 @@ __db_secondary_close(sdbp, flags)
+ 		/* We don't want to call close while the mutex is held. */
+ 		doclose = 1;
+ 	}
+-	MUTEX_UNLOCK(env, primary->mutex);
++	if (primary->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, primary->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	/*
+ 	 * sdbp->close is this function;  call the real one explicitly if
+@@ -1058,9 +1150,36 @@ __db_associate_foreign(fdbp, pdbp, callb
+ 	 * say, fdbp->f_primaries lists all databases for which fdbp is a
+ 	 * foreign constraint.
+ 	 */
+-	MUTEX_LOCK(env, fdbp->mutex);
++	if (fdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, fdbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	LIST_INSERT_HEAD(&fdbp->f_primaries, f_info, f_links);
+-	MUTEX_UNLOCK(env, fdbp->mutex);
++	if (fdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, fdbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	/*
+ 	* Associate fdbp as pdbp's foreign db, for referential integrity
+diff -u -p a/db-5.2.28.NC/src/db/db_cam.c b/db-5.2.28.NC/src/db/db_cam.c
+--- a/db-5.2.28.NC/src/db/db_cam.c
++++ b/db-5.2.28.NC/src/db/db_cam.c
+@@ -104,7 +104,23 @@ __dbc_close(dbc)
+ 	 * access specific cursor close routine, btree depends on having that
+ 	 * order of operations.
+ 	 */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 
+ 	if (opd != NULL) {
+ 		DB_ASSERT(env, F_ISSET(opd, DBC_ACTIVE));
+@@ -115,7 +131,18 @@ __dbc_close(dbc)
+ 	F_CLR(dbc, DBC_ACTIVE);
+ 	TAILQ_REMOVE(&dbp->active_queue, dbc, links);
+ 
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	/* Call the access specific cursor close routine. */
+ 	if ((t_ret =
+@@ -154,14 +181,41 @@ __dbc_close(dbc)
+ 		txn->cursors--;
+ 
+ 	/* Move the cursor(s) to the free queue. */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	if (opd != NULL) {
+ 		if (txn != NULL)
+ 			txn->cursors--;
+ 		TAILQ_INSERT_TAIL(&dbp->free_queue, opd, links);
+ 	}
+ 	TAILQ_INSERT_TAIL(&dbp->free_queue, dbc, links);
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	if (txn != NULL && F_ISSET(txn, TXN_PRIVATE) && txn->cursors == 0 &&
+ 	    (t_ret = __txn_commit(txn, 0)) != 0 && ret == 0)
+@@ -188,9 +242,36 @@ __dbc_destroy(dbc)
+ 	env = dbp->env;
+ 
+ 	/* Remove the cursor from the free queue. */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	TAILQ_REMOVE(&dbp->free_queue, dbc, links);
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	/* Free up allocated memory. */
+ 	if (dbc->my_rskey.data != NULL)
+@@ -3234,13 +3315,40 @@ __db_s_first(pdbp, sdbpp)
+ {
+ 	DB *sdbp;
+ 
+-	MUTEX_LOCK(pdbp->env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = pdbp->env->dbenv;
++
++		if (MUTEX_ON(pdbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(pdbp->env, pdbp->mutex);
++
++			CHECK_MTX_THREAD(pdbp->env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	sdbp = LIST_FIRST(&pdbp->s_secondaries);
+ 
+ 	/* See __db_s_next. */
+ 	if (sdbp != NULL)
+ 		sdbp->s_refcnt++;
+-	MUTEX_UNLOCK(pdbp->env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = pdbp->env->dbenv;
++
++		if (MUTEX_ON(pdbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(pdbp->env, pdbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	*sdbpp = sdbp;
+ 
+@@ -3290,7 +3398,23 @@ __db_s_next(sdbpp, txn)
+ 	env = pdbp->env;
+ 	closeme = NULL;
+ 
+-	MUTEX_LOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	DB_ASSERT(env, sdbp->s_refcnt != 0);
+ 	if (--sdbp->s_refcnt == 0) {
+ 		LIST_REMOVE(sdbp, s_links);
+@@ -3299,7 +3423,18 @@ __db_s_next(sdbpp, txn)
+ 	sdbp = LIST_NEXT(sdbp, s_links);
+ 	if (sdbp != NULL)
+ 		sdbp->s_refcnt++;
+-	MUTEX_UNLOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	*sdbpp = sdbp;
+ 
+@@ -3334,13 +3469,40 @@ __db_s_done(sdbp, txn)
+ 	env = pdbp->env;
+ 	doclose = 0;
+ 
+-	MUTEX_LOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	DB_ASSERT(env, sdbp->s_refcnt != 0);
+ 	if (--sdbp->s_refcnt == 0) {
+ 		LIST_REMOVE(sdbp, s_links);
+ 		doclose = 1;
+ 	}
+-	MUTEX_UNLOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	if (doclose == 0)
+ 		ret = 0;
+@@ -3364,12 +3526,39 @@ __db_s_count(pdbp)
+ 	env = pdbp->env;
+ 	count = 0;
+ 
+-	MUTEX_LOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	for (sdbp = LIST_FIRST(&pdbp->s_secondaries);
+ 	    sdbp != NULL;
+ 	    sdbp = LIST_NEXT(sdbp, s_links))
+ 		++count;
+-	MUTEX_UNLOCK(env, pdbp->mutex);
++	if (pdbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, pdbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	return (count);
+ }
+diff -u -p a/db-5.2.28.NC/src/db/db_join.c b/db-5.2.28.NC/src/db/db_join.c
+--- a/db-5.2.28.NC/src/db/db_join.c
++++ b/db-5.2.28.NC/src/db/db_join.c
+@@ -209,9 +209,36 @@ __db_join(primary, curslist, dbcp, flags
+ 
+ 	*dbcp = dbc;
+ 
+-	MUTEX_LOCK(env, primary->mutex);
++	if (primary->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, primary->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	TAILQ_INSERT_TAIL(&primary->join_queue, dbc, links);
+-	MUTEX_UNLOCK(env, primary->mutex);
++	if (primary->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, primary->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	return (0);
+ 
+@@ -733,9 +760,36 @@ __db_join_close(dbc)
+ 	 * must happen before any action that can fail and return, or else
+ 	 * __db_close may loop indefinitely.
+ 	 */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	TAILQ_REMOVE(&dbp->join_queue, dbc, links);
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	ENV_ENTER(env, ip);
+ 	/*
+diff -u -p a/db-5.2.28.NC/src/db/db_stati.c b/db-5.2.28.NC/src/db/db_stati.c
+--- a/db-5.2.28.NC/src/db/db_stati.c
++++ b/db-5.2.28.NC/src/db/db_stati.c
+@@ -390,7 +390,23 @@ __db_print_cursor(dbp)
+ 	__db_msg(env, "DB handle cursors:");
+ 
+ 	ret = 0;
+-	MUTEX_LOCK(dbp->env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = dbp->env->dbenv;
++
++		if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++
++			CHECK_MTX_THREAD(dbp->env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	__db_msg(env, "Active queue:");
+ 	TAILQ_FOREACH(dbc, &dbp->active_queue, links)
+ 		if ((t_ret = __db_print_citem(dbc)) != 0 && ret == 0)
+@@ -403,7 +419,18 @@ __db_print_cursor(dbp)
+ 	TAILQ_FOREACH(dbc, &dbp->free_queue, links)
+ 		if ((t_ret = __db_print_citem(dbc)) != 0 && ret == 0)
+ 			ret = t_ret;
+-	MUTEX_UNLOCK(dbp->env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = dbp->env->dbenv;
++
++		if (MUTEX_ON(dbp->env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(dbp->env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	return (ret);
+ }
+diff -u -p a/db-5.2.28.NC/src/dbreg/dbreg.c b/db-5.2.28.NC/src/dbreg/dbreg.c
+--- a/db-5.2.28.NC/src/dbreg/dbreg.c
++++ b/db-5.2.28.NC/src/dbreg/dbreg.c
+@@ -606,7 +606,24 @@ __dbreg_close_id(dbp, txn, op)
+ 	ret = 0;
+ 	DB_ASSERT(env, fnp->txn_ref > 0);
+ 	if (fnp->txn_ref > 1) {
+-		MUTEX_LOCK(env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = env->dbenv;
++
++			if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(env, dbp->mutex);
++
++				CHECK_MTX_THREAD(env, mutexp);
++
++				pthread_mutex_lock(&mutexp->u.m.mutex);
++
++				F_SET(mutexp, DB_MUTEX_LOCKED);
++				dbenv->thread_id(dbenv, &mutexp->pid,
++						 &mutexp->tid);
++			}
++		}
+ 		if (fnp->txn_ref > 1) {
+ 			if ((t_ret = __dbreg_rem_dbentry(
+ 			    env->lg_handle, fnp->id)) != 0 && ret == 0)
+@@ -620,7 +637,19 @@ __dbreg_close_id(dbp, txn, op)
+ 			 */
+ 			F_SET(fnp, DB_FNAME_CLOSED);
+ 			fnp->txn_ref--;
+-			MUTEX_UNLOCK(env, dbp->mutex);
++			if (dbp->mutex != MUTEX_INVALID) {
++				DB_ENV *dbenv;
++				DB_MUTEX *mutexp;
++
++				dbenv = env->dbenv;
++
++				if (MUTEX_ON(env) && !F_ISSET(dbenv,
++							      DB_ENV_NOLOCKING)) {
++					mutexp = MUTEXP_SET(env, dbp->mutex);
++					F_CLR(mutexp, DB_MUTEX_LOCKED);
++					pthread_mutex_unlock(&mutexp->u.m.mutex);
++				}
++			}
+ 			/* The mutex now lives only in the FNAME. */
+ 			dbp->mutex = MUTEX_INVALID;
+ 			dbp->log_filename = NULL;
+diff -u -p a/db-5.2.28.NC/src/hash/hash_rec.c b/db-5.2.28.NC/src/hash/hash_rec.c
+--- a/db-5.2.28.NC/src/hash/hash_rec.c
++++ b/db-5.2.28.NC/src/hash/hash_rec.c
+@@ -1520,9 +1520,41 @@ __ham_chgpg_recover_func(cp, my_dbc, cou
+ 		 * the cursor we're adjusting can't be closed
+ 		 * under us.
+ 		 */
+-		MUTEX_UNLOCK(cp->dbp->env, cp->dbp->mutex);
++		if (cp->dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = cp->dbp->env->dbenv;
++
++			if (MUTEX_ON(cp->dbp->env) && !F_ISSET(dbenv,
++							       DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(cp->dbp->env,
++						    cp->dbp->mutex);
++				F_CLR(mutexp, DB_MUTEX_LOCKED);
++				pthread_mutex_unlock(&mutexp->u.m.mutex);
++			}
++		}
+ 		ret = __dbc_close(lcp->opd);
+-		MUTEX_LOCK(cp->dbp->env, cp->dbp->mutex);
++		if (cp->dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = cp->dbp->env->dbenv;
++
++			if (MUTEX_ON(cp->dbp->env) && !F_ISSET(dbenv,
++							       DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(cp->dbp->env,
++						    cp->dbp->mutex);
++
++				CHECK_MTX_THREAD(cp->dbp->env, mutexp);
++
++				pthread_mutex_lock(&mutexp->u.m.mutex);
++
++				F_SET(mutexp, DB_MUTEX_LOCKED);
++				dbenv->thread_id(dbenv, &mutexp->pid,
++						 &mutexp->tid);
++			}
++		}
+ 		if (ret != 0)
+ 			return (ret);
+ 		lcp->opd = NULL;
+diff -u -p a/db-5.2.28.NC/src/qam/qam_files.c b/db-5.2.28.NC/src/qam/qam_files.c
+--- a/db-5.2.28.NC/src/qam/qam_files.c
++++ b/db-5.2.28.NC/src/qam/qam_files.c
+@@ -76,7 +76,23 @@ __qam_fprobe(dbc, pgno, addrp, mode, pri
+ 	 * The file cannot go away because we must have a record locked
+ 	 * in that file.
+ 	 */
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 	extid = QAM_PAGE_EXTENT(dbp, pgno);
+ 
+ 	/* Array1 will always be in use if array2 is in use. */
+@@ -287,7 +303,18 @@ alloc:			if ((ret = __os_realloc(env,
+ 		(void)__memp_set_flags(mpf, DB_MPOOL_UNLINK, 0);
+ 
+ err:
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 
+ 	if (ret == 0) {
+ 		pgno--;
+@@ -311,7 +338,24 @@ err:
+ 			return (0);
+ 		}
+ 
+-		MUTEX_LOCK(env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = env->dbenv;
++
++			if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(env, dbp->mutex);
++
++				CHECK_MTX_THREAD(env, mutexp);
++
++				pthread_mutex_lock(&mutexp->u.m.mutex);
++
++				F_SET(mutexp, DB_MUTEX_LOCKED);
++				dbenv->thread_id(dbenv, &mutexp->pid,
++						 &mutexp->tid);
++			}
++		}
+ 		/* Recalculate because we dropped the lock. */
+ 		offset = extid - array->low_extent;
+ 		DB_ASSERT(env, array->mpfarray[offset].pinref > 0);
+@@ -326,7 +370,18 @@ err:
+ 					ret = t_ret;
+ 			}
+ 		}
+-		MUTEX_UNLOCK(env, dbp->mutex);
++		if (dbp->mutex != MUTEX_INVALID) {
++			DB_ENV *dbenv;
++			DB_MUTEX *mutexp;
++
++			dbenv = env->dbenv;
++
++			if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++				mutexp = MUTEXP_SET(env, dbp->mutex);
++				F_CLR(mutexp, DB_MUTEX_LOCKED);
++				pthread_mutex_unlock(&mutexp->u.m.mutex);
++			}
++		}
+ 	}
+ 	return (ret);
+ }
+@@ -355,7 +410,23 @@ __qam_fclose(dbp, pgnoaddr)
+ 	env = dbp->env;
+ 	qp = (QUEUE *)dbp->q_internal;
+ 
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 
+ 	extid = QAM_PAGE_EXTENT(dbp, pgnoaddr);
+ 	array = &qp->array1;
+@@ -375,7 +446,18 @@ __qam_fclose(dbp, pgnoaddr)
+ 	ret = __memp_fclose(mpf, 0);
+ 
+ done:
+-	MUTEX_UNLOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++			F_CLR(mutexp, DB_MUTEX_LOCKED);
++			pthread_mutex_unlock(&mutexp->u.m.mutex);
++		}
++	}
+ 	return (ret);
+ }
+ 
+@@ -404,7 +486,23 @@ __qam_fremove(dbp, pgnoaddr)
+ 	env = dbp->env;
+ 	ret = 0;
+ 
+-	MUTEX_LOCK(env, dbp->mutex);
++	if (dbp->mutex != MUTEX_INVALID) {
++		DB_ENV *dbenv;
++		DB_MUTEX *mutexp;
++
++		dbenv = env->dbenv;
++
++		if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++			mutexp = MUTEXP_SET(env, dbp->mutex);
++
++			CHECK_MTX_THREAD(env, mutexp);
++
++			pthread_mutex_lock(&mutexp->u.m.mutex);
++
++			F_SET(mutexp, DB_MUTEX_LOCKED);
++			dbenv->thread_id(dbenv, &mutexp->pid, &mutexp->tid);
++		}
++	}
+ 
+ 	extid = QAM_PAGE_EXTENT(dbp, pgnoaddr);
+ 	array = &qp->array1;
+@@ -452,7 +550,18 @@ __qam_fremove(dbp, pgnoaddr)
+ 			array->hi_extent--;
+ 	}
+ 
+-err:	MUTEX_UNLOCK(env, dbp->mutex);
++err:	if (dbp->mutex != MUTEX_INVALID) {
++	DB_ENV *dbenv;
++	DB_MUTEX *mutexp;
++
++	dbenv = env->dbenv;
++
++	if (MUTEX_ON(env) && !F_ISSET(dbenv, DB_ENV_NOLOCKING)) {
++		mutexp = MUTEXP_SET(env, dbp->mutex);
++		F_CLR(mutexp, DB_MUTEX_LOCKED);
++		pthread_mutex_unlock(&mutexp->u.m.mutex);
++	}
++}
+ 
+ 	return (ret);
+ }

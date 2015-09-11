@@ -1,0 +1,396 @@
+103
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5022, cs: 235000, nb-normal 11825, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.935882
+   slow path rate: 0.000000
+16760.426009,
+
+138
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5013, cs: 235000, nb-normal 14311, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.937562
+   slow path rate: 0.000000
+16710.081396,
+
+185
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5031, cs: 235000, nb-normal 16145, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.934208
+   slow path rate: 0.000000
+16834.950591,
+
+247
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5016, cs: 235000, nb-normal 10851, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.937002
+   slow path rate: 0.000000
+16370.578306,
+
+331
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5061, cs: 235000, nb-normal 17408, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.928670
+   slow path rate: 0.000000
+16361.295077,
+
+443
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5055, cs: 235000, nb-normal 15756, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.929773
+   slow path rate: 0.000000
+16661.482732,
+
+592
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5057, cs: 235000, nb-normal 12851, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.929405
+   slow path rate: 0.000000
+16454.796034,
+
+791
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5075, cs: 235000, nb-normal 11014, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.926108
+   slow path rate: 0.000000
+16226.670881,
+
+1058
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5076, cs: 235000, nb-normal 16552, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.925926
+   slow path rate: 0.000000
+15550.408864,
+
+1414
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5063, cs: 235000, nb-normal 13181, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.928303
+   slow path rate: 0.000000
+15268.993472,
+
+1890
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5051, cs: 235000, nb-normal 16376, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.930509
+   slow path rate: 0.000000
+15033.765072,
+
+2526
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5102, cs: 235000, nb-normal 11940, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.921207
+   slow path rate: 0.000000
+14114.135796,
+
+3377
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5083, cs: 235000, nb-normal 14661, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.924651
+   slow path rate: 0.000000
+13445.928370,
+
+4514
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5146, cs: 235000, nb-normal 12308, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.913331
+   slow path rate: 0.000000
+12263.922289,
+
+6034
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5091, cs: 235000, nb-normal 15898, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.923198
+   slow path rate: 0.000000
+10730.904702,
+
+8065
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 5142, cs: 235000, nb-normal 15787, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.914041
+   slow path rate: 0.000000
+8999.452349,
+
+10781
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 7659, cs: 235000, nb-normal 14701, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.613657
+   slow path rate: 0.000000
+6229.508591,
+
+14410
+--- manager of core 4
+    nb wakeup: 1
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 12554, cs: 235000, nb-normal 24354, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.374383
+   slow path rate: 0.000000
+2774.534328,
+
+19261
+--- manager of core 4
+    nb wakeup: 2
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 38391, cs: 235000, nb-normal 70524, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.122425
+   slow path rate: 0.000000
+1684.531485,
+
+25746
+--- manager of core 4
+    nb wakeup: 2
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 53726, cs: 235000, nb-normal 299116, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.087481
+   slow path rate: 0.000000
+1650.241379,
+
+34414
+--- manager of core 4
+    nb wakeup: 2
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 56939, cs: 235000, nb-normal 598712, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.082544
+   slow path rate: 0.000000
+1655.761766,
+
+46000
+--- manager of core 4
+    nb wakeup: 3
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 66578, cs: 235000, nb-normal 964765, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.070594
+   slow path rate: 0.000000
+1662.239749,
+
+61486
+--- manager of core 4
+    nb wakeup: 4
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 66099, cs: 235000, nb-normal 1489572, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.071105
+   slow path rate: 0.000000
+1639.234519,
+
+82187
+--- manager of core 4
+    nb wakeup: 5
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 74807, cs: 235000, nb-normal 2189639, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.062828
+   slow path rate: 0.000000
+1655.740779,
+
+109856
+--- manager of core 4
+    nb wakeup: 6
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 76633, cs: 235000, nb-normal 3141122, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.061331
+   slow path rate: 0.000000
+1666.363353,
+
+146840
+--- manager of core 4
+    nb wakeup: 8
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 90497, cs: 235000, nb-normal 4384868, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.051935
+   slow path rate: 0.000000
+1631.401094,
+
+196275
+--- manager of core 4
+    nb wakeup: 10
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 81836, cs: 235000, nb-normal 6109664, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.057432
+   slow path rate: 0.000000
+1616.293677,
+
+262352
+--- manager of core 4
+    nb wakeup: 13
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 109496, cs: 235000, nb-normal 8347097, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.042924
+   slow path rate: 0.000000
+1585.587523,
+
+350676
+--- manager of core 4
+    nb wakeup: 17
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 115098, cs: 235000, nb-normal 11446850, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.041668
+   slow path rate: 0.000000
+1598.004426,
+
+468734
+--- manager of core 4
+    nb wakeup: 23
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 118484, cs: 235000, nb-normal 15571761, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.040477
+   slow path rate: 0.000000
+1563.616068,
+
+626538
+--- manager of core 4
+    nb wakeup: 30
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 126569, cs: 235000, nb-normal 20813956, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.037892
+   slow path rate: 0.000000
+1551.757736,
+
+837467
+--- manager of core 4
+    nb wakeup: 41
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 123760, cs: 235000, nb-normal 28099048, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.038752
+   slow path rate: 0.000000
+1565.449319,
+
+1119409
+--- manager of core 4
+    nb wakeup: 54
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 156842, cs: 235000, nb-normal 37688911, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.030578
+   slow path rate: 0.000000
+1522.390302,
+
+1496268
+--- manager of core 4
+    nb wakeup: 72
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 172757, cs: 235000, nb-normal 50789897, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.027761
+   slow path rate: 0.000000
+1532.575766,
+
+2000000
+--- manager of core 4
+    nb wakeup: 97
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 150143, cs: 235000, nb-normal 68322431, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.031942
+   slow path rate: 0.000000
+1535.807664,
+
+2673317
+--- manager of core 4
+    nb wakeup: 129
+    nb not alive: 0
+---- servicing thread 49 for core 4
+   false: 0, total: 159248, cs: 235000, nb-normal 91556217, nb-slow 0
+   false rate: 0.000000
+   use rate: 0.030116
+   slow path rate: 0.000000
+1497.926774,
+

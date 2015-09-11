@@ -1,0 +1,51 @@
+#!/bin/bash
+
+BASE=@abs_top_srcdir@
+
+while : ; do
+    case $1 in
+        -e)
+            export LOCK_PROFILE_EVENT="$2"
+            shift 2
+						;;
+        -d)
+            DEBUG="gdb --args"
+            shift 1
+						;;
+        -a)
+            export LOCK_PROFILE_FULL=1
+            shift 1
+						;;
+        -f)
+            export LOCK_PROFILE_FULL=2
+            shift 1
+            ;;
+				-h|--help)
+            cat <<EOF
+Usage: $0 [OPTIONS...] APPLICATION [ARGUMENTS...]
+OPTIONS:
+  -a: full report with per-lock information
+  -f: full report with per-lock information and lock allocation site
+  -d: run in gdb
+  -h: helo
+EOF
+						exit 0
+						;;
+        *)
+						break
+            ;;
+    esac
+done
+
+if [ x"$1" = x ] ; then
+    echo "Please specify an application to profile!" >&2
+    exit 1
+fi
+
+if [ x"$LD_PRELOAD" != x ] ; then
+    pre="$LD_PRELOAD:"
+fi
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BASE/.libs LD_PRELOAD=$pre$BASE/lock-profiler.so $DEBUG $@
+
+	

@@ -1,0 +1,6 @@
+.*.d
+profiler-light
+profiler-light.so
+*.o
+*~
+

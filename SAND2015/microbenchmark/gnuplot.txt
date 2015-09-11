@@ -1,0 +1,67 @@
+tencies - multiplot
+=====================
+
+unset multiplot;reset;set key spacing 0.5;set ytics auto;set xtics auto;set key default;set terminal aqua dashed enhanced font "Helvetica,18";set key above;set key right;set log xy;unset y2tics;set datafile separator ",";set ylabel "";set yrange[1000:1000000];set log y2;set y2range[1000:1000000];unset key;set log x2; set x2range[101:2000000];set xrange[101:2000000];set xlabel "Delay (cycles)";set y2label "";set multiplot;set size 0.82,1.0;set origin 0.205,0.0;unset ytics;set y2tics;show xtics;\
+plot "all_latencies_gl_posix_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     POSIX lock" lc rgb "#94ff94" lt 4 pt 2 with linespoints,\
+"all_latencies_gl_sl_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     Spinlock" with linespoints lc rgb "#9494ff" lt 3 pt 2,\
+"all_latencies_gl_mcsl_5_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#8beded" lt 2 pt 2,\
+"all_latencies_gl_fc_5_0_dependent.csv" using 1:2 axes x1y1 title "Flat Combining" lc rgb "#ffc994" lt 5 pt 2 with linespoints,\
+"all_latencies_gl_rcl_5_0_dependent.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#ff9494" lw 2 lt 1 pt 2 with linespoints,\
+"all_latencies_gl_posix_1_0_dependent.csv" using 1:2 axes x1y1 title "1 access:     POSIX lock" lc rgb "#009400" lt 4 pt 1 with linespoints,\
+"all_latencies_gl_sl_1_0_dependent.csv" using 1:2 axes x1y1 title "Spinlock" with linespoints lc rgb "#000094" lt 3 pt 1,\
+"all_latencies_gl_mcsl_1_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#009494" lt 2 pt 1,\
+"all_latencies_gl_fc_1_0_dependent.csv" using 1:2 axes x1y1 title "Flat Combining" lc rgb "#944a00" lt 5 pt 1 with linespoints,\
+"all_latencies_gl_rcl_1_0_dependent.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#940000" lw 2 lt 1 pt 1 with linespoints
+
+unset log x;set xtics 50;set ytics;set key spacing 0.5;set ytics auto;set key default;set key above;set key right;set log y;unset y2tics;set datafile separator ",";set yrange[1000:1000000];unset key;set xrange[0:99];set xlabel " ";set ylabel "Latency (cycles)";set y2label "";set size 0.3,1.0;set origin 0.0,0.0;\
+plot "all_latencies_gl_posix_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     POSIX lock" lc rgb "#94ff94" lt 4 pt 2 with linespoints,\
+"all_latencies_gl_sl_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     Spinlock" with linespoints lc rgb "#9494ff" lt 3 pt 2,\
+"all_latencies_gl_mcsl_5_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#8beded" lt 2 pt 2,\
+"all_latencies_gl_fc_5_0_dependent.csv" using 1:2 axes x1y1 title "Flat Combining" lc rgb "#ffc994" lt 5 pt 2 with linespoints,\
+"all_latencies_gl_rcl_5_0_dependent.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#ff9494" lw 2 lt 1 pt 2 with linespoints,\
+"all_latencies_gl_posix_1_0_dependent.csv" using 1:2 axes x1y1 title "1 access:     POSIX lock" lc rgb "#009400" lt 4 pt 1 with linespoints,\
+"all_latencies_gl_sl_1_0_dependent.csv" using 1:2 axes x1y1 title "Spinlock" with linespoints lc rgb "#000094" lt 3 pt 1,\
+"all_latencies_gl_mcsl_1_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#009494" lt 2 pt 1,\
+"all_latencies_gl_fc_1_0_dependent.csv" using 1:2 axes x1y1 title "Flat Combining" lc rgb "#944a00" lt 5 pt 1 with linespoints,\
+"all_latencies_gl_rcl_1_0_dependent.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#940000" lw 2 lt 1 pt 1 with linespoints
+
+dcm - multiplot
+===============
+
+unset multiplot;reset;\
+set datafile separator ",";\
+set terminal aqua dashed enhanced font "Helvetica,18";\
+set log xy;set log y2;\
+set key default;set key above;set key right;\
+set xtics auto;set xrange[101:2000000];set xlabel "Delay (cycles)";\
+set ytics auto;set yrange[1:120];set ylabel "";unset ytics;\
+set y2range[1:120];set y2tics;set y2label "";\
+set multiplot;set size 0.82,1.0;set origin 0.205,0.0;\
+plot "all_dcm_clients_gl_posix_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     POSIX" lc rgb "#94ff94" lt 4 pt 2 with linespoints,\
+"all_dcm_clients_gl_sl_5_0_dependent.csv" using 1:2 axes x1y1 title "Spinlock" with linespoints lc rgb "#9494ff" lt 3 pt 2,\
+"all_dcm_clients_gl_mcsl_5_0_dependent.csv" using 1:2 axes x1y1 title "MCS" with linespoints lc rgb "#8beded" lt 2 pt 2,\
+"all_dcm_clients_gl_fc_5_0_dependent.csv" using 1:2 axes x1y1 title "FC" lc rgb "#ffc994" lt 5 pt 2 with linespoints,\
+"all_rcl5sum.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#ff9494" lw 2 lt 1 pt 2 with linespoints,\
+"all_dcm_clients_gl_posix_1_0_dependent.csv" using 1:2 axes x1y1 title "1 access:     POSIX" lc rgb "#009400" lt 4 pt 1 with linespoints,\
+"all_dcm_clients_gl_sl_1_0_dependent.csv" using 1:2 axes x1y1 title "Spinlock" with linespoints lc rgb "#000094" lt 3 pt 1,\
+"all_dcm_clients_gl_mcsl_1_0_dependent.csv" using 1:2 axes x1y1 title "MCS" with linespoints lc rgb "#009494" lt 2 pt 1,\
+"all_dcm_clients_gl_fc_1_0_dependent.csv" using 1:2 axes x1y1 title "FC" lc rgb "#944a00" lt 5 pt 1 with linespoints,\
+"all_rcl1sum.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#940000" lw 2 lt 1 pt 1 with linespoints
+
+set datafile separator ",";\
+unset key;\
+unset log x;set xrange[0:99];set xtics 50;set xlabel " ";\
+set ytics;set yrange[1:120];set ytics auto;set log y;set ylabel "# L2 Cache Misses";\
+unset y2tics;set y2label "";\
+set size 0.3,0.7275;set origin 0.0,0.0;\
+plot "all_dcm_clients_gl_posix_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     POSIX lock" lc rgb "#94ff94" lt 4 pt 2 with linespoints,\
+"all_dcm_clients_gl_sl_5_0_dependent.csv" using 1:2 axes x1y1 title "5 accesses:     Spinlock" with linespoints lc rgb "#9494ff" lt 3 pt 2,\
+"all_dcm_clients_gl_mcsl_5_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#8beded" lt 2 pt 2,\
+"all_dcm_clients_gl_fc_5_0_dependent.csv" using 1:2 axes x1y1 title "FC" lc rgb "#ffc994" lt 5 pt 2 with linespoints,\
+"all_rcl5sum.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#ff9494" lw 2 lt 1 pt 2 with linespoints,\
+"all_dcm_clients_gl_posix_1_0_dependent.csv" using 1:2 axes x1y1 title "1 access:     POSIX lock" lc rgb "#009400" lt 4 pt 1 with linespoints,\
+"all_dcm_clients_gl_sl_1_0_dependent.csv" using 1:2 axes x1y1 title "Spinlock" with linespoints lc rgb "#000094" lt 3 pt 1,\
+"all_dcm_clients_gl_mcsl_1_0_dependent.csv" using 1:2 axes x1y1 title "MCS lock" with linespoints lc rgb "#009494" lt 2 pt 1,\
+"all_dcm_clients_gl_fc_1_0_dependent.csv" using 1:2 axes x1y1 title "FC" lc rgb "#944a00" lt 5 pt 1 with linespoints,\
+"all_rcl1sum.csv" using 1:2 axes x1y1 title "RCL" lc rgb "#940000" lw 2 lt 1 pt 1 with linespoints
+

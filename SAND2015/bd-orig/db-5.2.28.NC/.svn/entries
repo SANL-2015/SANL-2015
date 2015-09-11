@@ -1,0 +1,129 @@
+10
+
+dir
+1167
+svn+ssh://jplozi@scm.gforge.inria.fr/svn/margaux/rcl/bd-orig/db-5.2.28.NC
+svn+ssh://jplozi@scm.gforge.inria.fr/svn/margaux
+
+
+
+2011-10-18T16:53:17.810277Z
+1162
+julia
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+87d3af73-c78c-4235-839f-27bfabd33f98
+
+build_android
+dir
+
+test
+dir
+
+lang
+dir
+
+build_unix
+dir
+
+build_vxworks
+dir
+
+LICENSE
+file
+
+
+
+
+2011-10-19T12:28:29.000000Z
+12cc3ff983ed4ecc6cc091370ee4dbc3
+2011-09-11T19:15:37.953107Z
+977
+jplozi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7310
+
+dist
+dir
+
+build_wince
+dir
+
+src
+dir
+
+build_windows
+dir
+
+util
+dir
+
+README
+file
+
+
+
+
+2011-10-19T12:28:29.000000Z
+790fec2a02623e5e7a45db69e993bd60
+2011-09-11T19:15:37.953107Z
+977
+jplozi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+235
+
+examples
+dir
+

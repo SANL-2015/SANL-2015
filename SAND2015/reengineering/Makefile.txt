@@ -1,0 +1,260 @@
+all: raytrace radiosity memcached
+
+converter1.cocci: \
+ initialize.cocci \
+ header.cocci \
+ api.cocci \
+ splash.cocci \
+ berkeleydb.cocci \
+ phoenix.cocci \
+ global_variable_and_field.cocci \
+ initializer.cocci \
+ useful.cocci \
+ lockret.cocci \
+ vardecls.cocci \
+ prelude.cocci \
+ variables.cocci \
+ transform.cocci \
+ structure_accesses.cocci
+	source ./converter.cocci > converter1.cocci
+
+OPTIONS=-cocci_file converter1.cocci -profile \
+	-D structure_info -D structure_output=$@_structures \
+	-D good1=pthread_cond_broadcast \
+	-D good2=pthread_cond_wait -all_includes -include_headers
+
+OPTIONS=-cocci_file converter1.cocci -D use_api -profile \
+	-D structure_info -D structure_output=$@_structures \
+	-D good1=liblock_cond_broadcast \
+	-D good2=liblock_cond_wait -all_includes -include_headers
+
+GENERICLOCKS=\
+	-D pre_mutex_init=pthread_mutex_init \
+	-D pre_mutex_lock=pthread_mutex_lock \
+	-D pre_mutex_unlock=pthread_mutex_unlock \
+	-D mutex_init=pthread_mutex_init \
+	-D mutex_lock=pthread_mutex_lock \
+	-D mutex_unlock=pthread_mutex_unlock \
+
+SPECIFICLOCKS= -D specific_locks \
+	-D pre_mutex_init=pthread_mutex_init \
+	-D pre_mutex_lock=pthread_mutex_lock \
+	-D pre_mutex_unlock=pthread_mutex_unlock \
+	-D mutex_init=libinit \
+	-D mutex_lock=liblock \
+	-D mutex_unlock=libunlock
+
+HEADERS=-D profile_file=$@_traces.txt \
+	-D header_file=liblock-$@.h \
+	-D full_project_header_file=liblock-$@.h \
+	-D project=$@ -D init_path=..
+
+# ------------------------------------------------------------------------
+# Splash
+
+SPLASHTRACE=-D profile_file=splash_traces.txt \
+	-D header_file=liblock-$@.h \
+	-D full_project_header_file=liblock-splash2.h \
+	-D project=$@ -D init_path=../splash2-work/codes
+
+APP=../splash2-work/codes/apps
+KERNEL=../splash2-work/codes/kernels
+
+GSPLASH=$(OPTIONS) $(GENERICLOCKS) $(SPLASHTRACE) -patch ../splash2-work
+SSPLASH=$(OPTIONS) $(SPECIFICLOCKS) $(SPLASHTRACE) -patch ../splash2-work
+
+barnes: converter1.cocci
+	/bin/rm -f $@_structures
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ \
+	-macro_file_builtins barnes.h > $@.out 2> $@.tmp
+
+fmm: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+ocean: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+raytrace: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ \
+	-macro_file_builtins ray.h > $@.out 2> $@.tmp
+
+radiosity: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+volrend: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+water-nsquared: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+water-spatial: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(APP)/$@ > $@.out 2> $@.tmp
+
+cholesky: converter1.cocci
+	/bin/rm -f $@_structures
+	spatch.opt $(GSPLASH) -dir $(KERNEL)/$@ > $@.out 2> $@.tmp
+
+fft: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(KERNEL)/$@ > $@.out 2> $@.tmp
+
+lu: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(KERNEL)/$@ > $@.out 2> $@.tmp
+
+radix: converter1.cocci
+	/bin/rm -f $@_structures 
+	spatch.opt $(GSPLASH) -dir $(KERNEL)/$@ > $@.out 2> $@.tmp
+
+splash2: barnes fmm ocean radiosity raytrace volrend water-nsquared \
+	water-spatial cholesky fft lu radix
+	cat barnes.out fmm.out ocean.out radiosity.out raytrace.out \
+	volrend.out water-nsquared.out water-spatial.out cholesky.out \
+	fft.out lu.out radix.out > splash2.out
+	cat liblock-barnes.h liblock-fmm.h liblock-ocean.h \
+	liblock-radiosity.h liblock-raytrace.h liblock-volrend.h \
+	liblock-water-nsquared.h liblock-water-spatial.h liblock-cholesky.h \
+	liblock-fft.h liblock-lu.h liblock-radix.h > liblock-splash2.h
+
+# ------------------------------------------------------------------------
+# Memcached
+
+MEMTRACEOLD=-D profile_file=mem_trace.txt \
+	-D header_file=liblock-$@.h \
+	-D full_project_header_file=liblock-$@.h \
+	-D project=$@-1.4.6 -D init_path=..
+
+memcached_old: converter1.cocci
+	/bin/rm -f $@_structures
+	spatch.opt $(OPTIONS) $(SPECIFICLOCKS) $(MEMTRACEOLD) \
+	-D the_lock=cache_lock \
+	-no_saved_typedefs -dir ../mem-orig > $@.out 2> $@.tmp
+
+# ------------------------------------------------------------------------
+# Memcached2
+
+MEMSPECIFICLOCKS= -D specific_locks \
+	-D pre_mutex_init=pthread_mutex_init \
+	-D pre_mutex_lock=mutex_lock \
+	-D pre_mutex_unlock=pthread_mutex_unlock \
+	-D mutex_init=libinit \
+	-D mutex_lock=liblock \
+	-D mutex_unlock=libunlock
+
+MEMTRACE=-D profile_file=mem_trace.txt \
+	-D header_file=liblock-$@10.h \
+	-D full_project_header_file=liblock-$@10.h \
+	-D project=$@-1.4.10 -D init_path=..
+
+memcached: converter1.cocci
+	/bin/rm -f $@10_structures
+	spatch.opt $(OPTIONS) $(MEMSPECIFICLOCKS) $(MEMTRACE) \
+	-D the_lock=cache_lock \
+	-no_saved_typedefs -dir ../mem-orig > $@10.out 2> $@10.tmp
+
+# ------------------------------------------------------------------------
+# BerkeleyDB
+
+BDLOCKS= -D specific_locks \
+	-D pre_mutex_init=do_nothing \
+	-D pre_mutex_lock=MUTEX_LOCK \
+	-D pre_mutex_unlock=MUTEX_UNLOCK \
+	-D mutex_init=do_nothing \
+	-D mutex_lock=BDMUTEX_LOCK \
+	-D mutex_unlock=BDMUTEX_UNLOCK
+
+BDOPTIONS=-cocci_file converter1.cocci -D use_api -profile -c++ \
+	-D structure_info -D structure_output=$@_structures \
+	-D good1=liblock_cond_broadcast \
+	-D good2=liblock_cond_wait -recursive_includes -include_headers
+
+BD=-D profile_file=bd_traces.txt \
+	-D header_file=liblock-$@.h \
+	-D full_project_header_file=liblock-$@.h \
+	-D project=$@ -D init_path=..
+
+bd: converter1.cocci
+	/bin/rm -f liblock-$@.h
+	touch liblock-$@.h
+	spatch.opt $(BDOPTIONS) $(BDLOCKS) $(HEADERS) -dir ../bd-orig -D force \
+	-macro_file_builtins bd.h -profile > $@.out 2> $@.tmp
+	echo "#define MLOCK(a,b) ({DB_MUTEX *mutexp = MUTEXP_SET(a,b); &mutexp->u.m.lmutex;})" >> liblock-$@.h
+	echo "#define __RETURN__(a) return a" >> liblock-$@.h
+	echo "#define __liblock_execute_operation(a, b, c) ({uintptr_t r; if ((a) != NULL) r = liblock_execute_operation((a), (b), (c)); else r = (c)(b); r;})" >> liblock-$@.h
+
+converter: converter1.cocci
+	spatch.opt $(BDOPTIONS) $(BDLOCKS) $(HEADERS) converter.c -D force \
+	-macro_file_builtins bd.h -o converter.fixed -debug \
+	> $@.out 2> $@.tmp
+
+minibd: converter1.cocci
+	spatch_linux mini_berkeleydb.cocci -dir ../bd-orig -all_includes \
+	-macro_file_builtins bd.h
+
+# ------------------------------------------------------------------------
+# Parsec
+
+DEDUP=-D full_project_header_file=liblock-dedup.h
+X264=-D full_project_header_file=liblock-x264.h
+FERRET=-D full_project_header_file=liblock-ferret.h
+
+dedup: converter1.cocci
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(DEDUP) \
+	-dir /var/julia/profiling/pprof/parsec-2.1/pkgs/kernels/dedup/src \
+	> $@.out 2> $@.tmp
+
+x264: converter1.cocci
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(DEDUP) \
+	-dir /var/julia/profiling/pprof/parsec-2.1/pkgs/apps/x264/src \
+	> $@.out 2> $@.tmp
+
+ferret: converter1.cocci
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(DEDUP) \
+	-dir /var/julia/profiling/pprof/parsec-2.1/pkgs/apps/ferret/src \
+	> $@.out 2> $@.tmp
+
+parsec: dedup x264 ferret
+
+# ------------------------------------------------------------------------
+# Migrate
+
+migrate: converter1.cocci
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(HEADERS) \
+	-dir ../migrate_source -D force -macro_file_builtins mig.h \
+	> $@.out 2> $@.tmp
+
+# ------------------------------------------------------------------------
+# Phoenix
+
+PHOENIXLOCKS=\
+	-D pre_mutex_init=pthread_mutex_init \
+	-D pre_mutex_lock=lock_acquire \
+	-D pre_mutex_unlock=lock_release \
+	-D mutex_init=pthread_mutex_init \
+	-D mutex_lock=lock_acquire \
+	-D mutex_unlock=lock_release
+
+phoenix: converter1.cocci
+	spatch.opt $(OPTIONS) $(PHOENIXLOCKS) $(HEADERS) \
+	-dir ../phoenix-orig \
+	> $@.out 2> $@.tmp
+
+# ------------------------------------------------------------------------
+# Converter
+
+heating: converter1.cocci
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(MIGRATE) \
+	converter.c -D force \
+	-o converter.out > $@.out 2> $@.tmp
+
+minipatch: mini.c
+	spatch.opt $(OPTIONS) $(GENERICLOCKS) $(MIGRATE) \
+	mini.c -D force \
+	-o mini.out > $@.out 2> $@.tmp

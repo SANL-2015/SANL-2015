@@ -1,0 +1,46 @@
+Mutex #22859 (0x7fdb81ecba30) first referenced by:
+    mutrace.c:1072  pthread_mutex_init()
+    mut_pthread.c:140   __db_pthread_mutex_init()
+    mut_alloc.c:184 __mutex_alloc_int()
+    db.c:487    __env_setup()
+    db_open.c:209   __db_open()
+    db_iface.c:1191 __db_open_pp()
+    tpcc_helpers.c:211  open_db()
+    tpcc_xact_server.c:380  prepare_for_xactions()
+    libc-start.c:258    __libc_start_main()
+
+Mutex #22869 (0x7fdb81ecc020) first referenced by:
+    mutrace.c:1072  pthread_mutex_init()
+    mut_pthread.c:140   __db_pthread_mutex_init()
+    mut_alloc.c:184 __mutex_alloc_int()
+    db.c:487    __env_setup()
+    db_open.c:209   __db_open()
+    db_iface.c:1191 __db_open_pp()
+    tpcc_helpers.c:211  open_db()
+    tpcc_xact_server.c:414  prepare_for_xactions()
+    libc-start.c:258    __libc_start_main()
+
+ Mutex #   Locked  Changed    Cont.       L2 DCM tot.Time[ms] avg.Time[ms] max.Time[ms]  Flags
+   22859  9044952  8591778  6093221        3.260    38196.203        0.004        0.537 Mx.--.
+   22869  8517839  7996008  5294027        3.078    32120.682        0.004        0.529 Mx.--.
+   21564     1678     1569      195        2.471        8.903        0.005        0.050 M-.--.
+   70527       35       30        4        4.000        0.141        0.004        0.014 M-.--.
+   21382       22       21        1        1.000        0.192        0.009        0.047 M-.--.
+   21386        7        6        1        2.000        0.110        0.016        0.051 M-.--.
+   21145        5        4        1        1.500        0.058        0.012        0.039 M-.--.
+   21306        5        4        1        1.500        0.031        0.006        0.016 M-.--.
+   21137       11       10        0        0.000        0.101        0.009        0.058 M-.--.
+   21138        9        8        0        0.500        0.100        0.011        0.053 M-.--.
+     ...      ...      ...      ...          ...          ...           ...         ... ||||||
+                                                                                        /|||||
+          Object:                                                  M = Mutex, W = RWLock /||||
+           State:                                              x = dead, ! = inconsistent /|||
+             Use:                                              R = used in realtime thread /||
+      Mutex Type:                               r = RECURSIVE, e = ERRORCHECK, a = ADAPTIVE /|
+  Mutex Protocol:                                                   i = INHERIT, p = PROTECT /
+     RWLock Kind:              r = PREFER_READER, w = PREFER_WRITER, W = PREFER_WRITER_NONREC 
+
+mutrace: Note that the flags column R is only valid in --track-rt mode!
+
+mutrace: Total runtime is 220694.707 ms.
+
