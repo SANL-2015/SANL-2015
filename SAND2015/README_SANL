@@ -1,12 +1,12 @@
 =============
-SAND Benchmarks
+SANL Benchmarks
 ==============
 
 SAND Implementation in liblock/saml.c
-Lines 20-120 are constants, global variables and data structures used by SAND
+Lines 20-120 are constants, global variables and data structures used by SANL
 Lines 121-178 are mcs lock as combined code-based lock.
 
-do_liblock_execute_operation(saml) is lock body of SAND.
+do_liblock_execute_operation(saml) is lock body of SANL.
 Lines 199-204, 311-318, 339-346,365-372 and 533-540 are profiling codes, "collect execution information".
 Lines 207-300 are contention degree computation and voting algorithm.
 Lines 302-348 are code-based lock mode.
@@ -17,4 +17,4 @@ Lines 443-466 are NUMA-aware migration lock algorithm.
 Lines 551-626 are SAND conditional codes.
 Lines 634-751 are SAND init/destroy functions.
 
-Profile shell script microbenchmark/profile_SAND.sh (not all included)
+Profile shell script microbenchmark/profile_SANL.sh (not all included)
